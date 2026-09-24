@@ -1,6 +1,7 @@
 {
-  "_comment": "Exercises every EN 16931 business term/group (BT-nnn/BG-nnn) supported by the factur-x library's CII generator: notes, references (project/contract/order/despatch/receiving/tender/object/accounting), preceding invoice, invoicing period, seller/buyer/payee/tax-representative/ship-to parties with contacts and electronic addresses, delivery, payment means (card + IBAN + BIC), document- and line-level allowances/charges, multiple VAT breakdown entries, multiple lines with product classification/origin/attributes, rounding and prepaid amounts.",
+  "_comment": "Exercises every EN 16931 business term/group (BT-nnn/BG-nnn) supported by the factur-x library's CII generator: notes, references (project/contract/order/despatch/receiving/tender/object/accounting), preceding invoice, invoicing period, seller/buyer/payee/tax-representative/ship-to parties with contacts and electronic addresses, delivery, payment means (card + IBAN + BIC), document- and line-level allowances/charges, multiple VAT breakdown entries, multiple lines with product classification/origin/attributes, rounding and prepaid amounts. 'language': 'en' here to demonstrate the English locale profile (Letter paper, MM/DD/YYYY dates); the other two examples use the German default.",
   "level": "en16931",
+  "language": "en",
   "business_process_id": "urn:example:process:A1",
 
   "invoice": {

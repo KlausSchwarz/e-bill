@@ -1,6 +1,7 @@
 {
-  "_comment": "A realistic everyday invoice: full addresses, contact details, several line items, payment terms and IBAN, a note. BT-nnn/BG-nnn = EN 16931 business term/group IDs.",
+  "_comment": "A realistic everyday invoice: full addresses, contact details, several line items, payment terms and IBAN, a note. BT-nnn/BG-nnn = EN 16931 business term/group IDs. 'language': 'de' (default) or 'en', see i18n.py.",
   "level": "en16931",
+  "language": "de",
 
   "invoice": {
     "id": "INV-2026-0142",

@@ -6,6 +6,12 @@ groups of EN 16931 (seller, buyer, lines, VAT breakdown, totals, ...). Internall
 is flattened into the flat BT-nnn/BG-nnn dict expected by the `factur-x` library,
 which builds and validates the actual Cross-Industry-Invoice XML against the official
 EN 16931 XSD, then embeds it into a PDF/A-3 document as a proper Factur-X attachment.
+
+The optional top-level "language" key ("de", the default, or "en") controls the
+human-readable side of the document: labels, date/number formatting, paper size and
+address line order follow the matching locale profile (see i18n.py). The embedded
+XML invoice is unaffected by language, since EN 16931 mandates locale-independent
+ISO dates and plain decimal amounts there.
 """
 
 import datetime
@@ -22,11 +28,12 @@ from pypdf.generic import (
     StreamObject,
     TextStringObject,
 )
-from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+
+from i18n import DEFAULT_LANGUAGE, format_amount, format_date, get_locale_profile
 
 FONT_NAME = "BitstreamVeraSans"
 FONT_NAME_BOLD = "BitstreamVeraSans-Bold"
@@ -41,20 +48,22 @@ def create_bill(params: dict) -> bytes:
     a PDF attachment), i.e. a "hybrid" invoice document.
     """
     level = params.get("level", "en16931")
+    profile = get_locale_profile(params.get("language", DEFAULT_LANGUAGE))
 
     data_dict = _to_facturx_dict(params, level)
     xml_bytes = generate_cii_xml(data_dict, level=level, check_xsd=True, check_schematron=False)
 
-    visual_pdf = _render_visual_pdf(params)
+    visual_pdf = _render_visual_pdf(params, profile)
     pdfa_pdf = _add_pdfa_output_intent(visual_pdf)
 
-    pdf_metadata = _build_pdf_metadata(params)
+    pdf_metadata = _build_pdf_metadata(params, profile)
     return generate_from_binary(
         pdfa_pdf,
         xml_bytes,
         level=level,
         check_xsd=False,
         pdf_metadata=pdf_metadata,
+        lang=profile.rfc3066_code,
     )
 
 
@@ -495,47 +504,55 @@ def _register_fonts():
     pdfmetrics.registerFont(TTFont(FONT_NAME_BOLD, base_dir + "fonts/VeraBd.ttf"))
 
 
-def _render_visual_pdf(params: dict) -> bytes:
+def _render_visual_pdf(params: dict, profile) -> bytes:
     _register_fonts()
+    L = profile.labels
 
     invoice = params["invoice"]
     seller = params["seller"]
     buyer = params["buyer"]
     totals = params["totals"]
+    currency = totals["currency"]
+
+    def money(value) -> str:
+        return f"{format_amount(value, profile)} {currency}"
 
     buf = BytesIO()
-    c = canvas.Canvas(buf, pagesize=A4)
-    c.setTitle(f"Invoice {invoice['id']}")
-    width, height = A4
+    c = canvas.Canvas(buf, pagesize=profile.page_size)
+    c.setTitle(f"{L['invoice']} {invoice['id']}")
+    width, height = profile.page_size
     left = 20 * mm
     y = height - 20 * mm
 
     c.setFont(FONT_NAME_BOLD, 16)
-    c.drawString(left, y, f"Invoice {invoice['id']}")
+    c.drawString(left, y, f"{L['invoice']} {invoice['id']}")
     y -= 8 * mm
 
     c.setFont(FONT_NAME, 10)
-    c.drawString(left, y, f"Issue date: {invoice['issue_date']}")
+    c.drawString(left, y, f"{L['issue_date']}: {format_date(invoice['issue_date'], profile)}")
     y -= 10 * mm
 
     c.setFont(FONT_NAME_BOLD, 11)
-    c.drawString(left, y, "Seller")
-    c.drawString(left + 90 * mm, y, "Buyer")
+    c.drawString(left, y, L["seller"])
+    c.drawString(left + 90 * mm, y, L["buyer"])
     y -= 6 * mm
     y_parties_start = y
     c.setFont(FONT_NAME, 10)
-    for text in _party_lines(seller):
+    for text in _party_lines(seller, profile):
         c.drawString(left, y, text)
         y -= 5 * mm
     y_after_seller = y
     y = y_parties_start
-    for text in _party_lines(buyer):
+    for text in _party_lines(buyer, profile):
         c.drawString(left + 90 * mm, y, text)
         y -= 5 * mm
     y = min(y, y_after_seller) - 10 * mm
 
     c.setFont(FONT_NAME_BOLD, 10)
-    headers = ["#", "Description", "Qty", "Unit price", "VAT %", "Line total"]
+    headers = [
+        L["col_pos"], L["col_description"], L["col_qty"],
+        L["col_unit_price"], L["col_vat_percent"], L["col_line_total"],
+    ]
     col_x = [left, left + 12 * mm, left + 95 * mm, left + 115 * mm, left + 145 * mm, left + 165 * mm]
     for header, x in zip(headers, col_x):
         c.drawString(x, y, header)
@@ -552,10 +569,10 @@ def _render_visual_pdf(params: dict) -> bytes:
         row = [
             line["line_id"],
             product["name"],
-            f"{quantity['value']} {quantity['unit_code']}",
-            f"{price['net_unit_price']} {totals['currency']}",
+            f"{format_amount(quantity['value'], profile)} {quantity['unit_code']}",
+            money(price["net_unit_price"]),
             f"{vat.get('rate', '-')}",
-            f"{line['line_total_amount']} {totals['currency']}",
+            money(line["line_total_amount"]),
         ]
         for value, x in zip(row, col_x):
             c.drawString(x, y, str(value))
@@ -571,42 +588,42 @@ def _render_visual_pdf(params: dict) -> bytes:
 
     c.setFont(FONT_NAME, 10)
     totals_rows = [
-        ("Sum of line amounts", totals["sum_of_line_amounts"]),
-        ("Tax basis total", totals["tax_basis_total"]),
-        ("Tax total", totals["tax_total"]),
+        (L["sum_of_line_amounts"], totals["sum_of_line_amounts"]),
+        (L["tax_basis_total"], totals["tax_basis_total"]),
+        (L["tax_total"], totals["tax_total"]),
     ]
     if totals.get("allowance_total"):
-        totals_rows.append(("Allowance total", totals["allowance_total"]))
+        totals_rows.append((L["allowance_total"], totals["allowance_total"]))
     if totals.get("charge_total"):
-        totals_rows.append(("Charge total", totals["charge_total"]))
+        totals_rows.append((L["charge_total"], totals["charge_total"]))
     if totals.get("prepaid_amount"):
-        totals_rows.append(("Prepaid amount", totals["prepaid_amount"]))
-    totals_rows.append(("Grand total", totals["grand_total"]))
-    totals_rows.append(("Due payable amount", totals["due_payable_amount"]))
+        totals_rows.append((L["prepaid_amount"], totals["prepaid_amount"]))
+    totals_rows.append((L["grand_total"], totals["grand_total"]))
+    totals_rows.append((L["due_payable_amount"], totals["due_payable_amount"]))
 
     for label, value in totals_rows:
-        c.drawString(left + 110 * mm, y, label)
-        c.drawRightString(width - 20 * mm, y, f"{value} {totals['currency']}")
+        c.drawString(left + 70 * mm, y, label)
+        c.drawRightString(width - 20 * mm, y, money(value))
         y -= 5 * mm
 
     payment = params.get("payment") or {}
     if payment.get("payment_terms") or payment.get("due_date"):
         y -= 8 * mm
         c.setFont(FONT_NAME_BOLD, 10)
-        c.drawString(left, y, "Payment")
+        c.drawString(left, y, L["payment"])
         y -= 5 * mm
         c.setFont(FONT_NAME, 9)
         if payment.get("payment_terms"):
             c.drawString(left, y, payment["payment_terms"])
             y -= 5 * mm
         if payment.get("due_date"):
-            c.drawString(left, y, f"Due date: {payment['due_date']}")
+            c.drawString(left, y, f"{L['due_date']}: {format_date(payment['due_date'], profile)}")
             y -= 5 * mm
 
     if invoice.get("notes"):
         y -= 5 * mm
         c.setFont(FONT_NAME_BOLD, 10)
-        c.drawString(left, y, "Notes")
+        c.drawString(left, y, L["notes"])
         y -= 5 * mm
         c.setFont(FONT_NAME, 9)
         for note in invoice["notes"]:
@@ -618,7 +635,8 @@ def _render_visual_pdf(params: dict) -> bytes:
     return buf.getvalue()
 
 
-def _party_lines(party: dict) -> list:
+def _party_lines(party: dict, profile) -> list:
+    L = profile.labels
     address = party.get("address", {})
     lines = [party["name"]]
     if address.get("line1"):
@@ -626,12 +644,16 @@ def _party_lines(party: dict) -> list:
     if address.get("line2"):
         lines.append(address["line2"])
     postcode_city = " ".join(filter(None, [address.get("postcode"), address.get("city")]))
-    if postcode_city:
+    city_postcode = " ".join(filter(None, [address.get("city"), address.get("postcode")]))
+    if profile.address_order == "city_postcode":
+        if city_postcode:
+            lines.append(city_postcode)
+    elif postcode_city:
         lines.append(postcode_city)
     if address.get("country_code"):
         lines.append(address["country_code"])
     if party.get("vat_id"):
-        lines.append(f"VAT ID: {party['vat_id']}")
+        lines.append(f"{L['vat_id']}: {party['vat_id']}")
     return lines
 
 
@@ -673,12 +695,17 @@ def _add_pdfa_output_intent(pdf_bytes: bytes) -> bytes:
     return out.getvalue()
 
 
-def _build_pdf_metadata(params: dict) -> dict:
+def _build_pdf_metadata(params: dict, profile) -> dict:
     invoice = params["invoice"]
     seller = params["seller"]
+    L = profile.labels
     return {
         "author": seller["name"],
-        "keywords": "Invoice, Factur-X, ZUGFeRD",
-        "title": f"{seller['name']}: Invoice {invoice['id']}",
-        "subject": f"Factur-X invoice {invoice['id']} dated {invoice['issue_date']} issued by {seller['name']}",
+        "keywords": L["pdf_keywords"],
+        "title": L["pdf_title"].format(seller=seller["name"], id=invoice["id"]),
+        "subject": L["pdf_subject"].format(
+            id=invoice["id"],
+            date=format_date(invoice["issue_date"], profile),
+            seller=seller["name"],
+        ),
     }

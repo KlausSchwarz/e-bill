@@ -1,6 +1,7 @@
 {
-  "_comment": "Minimal EN 16931 invoice: only the fields required to produce a schema-valid Factur-X/ZUGFeRD invoice. BT-nnn/BG-nnn = EN 16931 business term/group IDs.",
+  "_comment": "Minimal EN 16931 invoice: only the fields required to produce a schema-valid Factur-X/ZUGFeRD invoice. BT-nnn/BG-nnn = EN 16931 business term/group IDs. 'language' controls the human-readable side only (labels, date/number format, paper size); omit it to get the default (German).",
   "level": "en16931",
+  "language": "de",
 
   "invoice": {
     "id": "INV-2026-0001",
