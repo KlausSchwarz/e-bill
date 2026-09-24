@@ -1,0 +1,278 @@
+{
+  "_comment": "Exercises every EN 16931 business term/group (BT-nnn/BG-nnn) supported by the factur-x library's CII generator: notes, references (project/contract/order/despatch/receiving/tender/object/accounting), preceding invoice, invoicing period, seller/buyer/payee/tax-representative/ship-to parties with contacts and electronic addresses, delivery, payment means (card + IBAN + BIC), document- and line-level allowances/charges, multiple VAT breakdown entries, multiple lines with product classification/origin/attributes, rounding and prepaid amounts.",
+  "level": "en16931",
+  "business_process_id": "urn:example:process:A1",
+
+  "invoice": {
+    "id": "INV-2026-9999",
+    "issue_date": "2026-09-24",
+    "type_code": "380",
+    "buyer_reference": "PO-9988",
+    "notes": [
+      { "text": "Goods delivered as agreed in framework contract FC-2025-07.", "subject_code": "AAI" },
+      { "text": "Bank charges are at the expense of the buyer." }
+    ],
+    "project_reference": { "id": "PRJ-42", "name": "Warehouse retrofit" },
+    "contract_reference": "FC-2025-07",
+    "purchase_order_reference": "PO-9988",
+    "sales_order_reference": "SO-5567",
+    "receiving_advice_reference": "RA-1102",
+    "despatch_advice_reference": "DA-2201",
+    "tender_or_lot_reference": "TENDER-88",
+    "object_references": [
+      { "reference_type_code": "AWY", "value": "AWB-778899" }
+    ],
+    "buyer_accounting_reference": "COSTCENTER-77",
+    "preceding_invoices": [
+      { "number": "INV-2026-9990", "issue_date": "2026-08-01" }
+    ],
+    "invoicing_period": { "start": "2026-09-01", "end": "2026-09-30" }
+  },
+
+  "seller": {
+    "name": "Musterhandel GmbH",
+    "trading_name": "Musterhandel",
+    "legal_form": "Registered at Amtsgericht Berlin, HRB 12345",
+    "legal_registration_id": { "id": "HRB12345", "scheme_id": "0002" },
+    "vat_id": "DE123456789",
+    "local_tax_id": "21/815/08150",
+    "identifiers": [
+      { "id": "DUNS-000111222", "scheme_id": "60" }
+    ],
+    "electronic_address": { "id": "musterhandel@peppol.example", "scheme_id": "0088" },
+    "address": {
+      "line1": "Musterstrasse 12",
+      "line2": "Gebaeude C",
+      "line3": "Hinterhof",
+      "city": "Berlin",
+      "postcode": "10115",
+      "country_subdivision": "BE",
+      "country_code": "DE"
+    },
+    "contact": {
+      "name": "Anna Beispiel",
+      "department": "Accounting",
+      "phone": "+49 30 1234567",
+      "email": "buchhaltung@musterhandel.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Beispiel AG",
+    "trading_name": "Beispiel",
+    "legal_registration_id": { "id": "HRB98765", "scheme_id": "0002" },
+    "vat_id": "DE987654321",
+    "identifiers": [
+      { "id": "CUST-4711", "scheme_id": "" }
+    ],
+    "electronic_address": { "id": "beispiel-ag@peppol.example", "scheme_id": "0088" },
+    "address": {
+      "line1": "Kundenweg 5",
+      "line2": "3. Stock",
+      "city": "Hamburg",
+      "postcode": "20095",
+      "country_subdivision": "HH",
+      "country_code": "DE"
+    },
+    "contact": {
+      "name": "Max Kunde",
+      "department": "Procurement",
+      "phone": "+49 40 7654321",
+      "email": "einkauf@beispiel-ag.example"
+    }
+  },
+
+  "payee": {
+    "name": "Musterhandel Factoring GmbH",
+    "identifiers": [
+      { "id": "PAYEE-001", "scheme_id": "" }
+    ],
+    "legal_registration_id": { "id": "HRB55555", "scheme_id": "0002" }
+  },
+
+  "seller_tax_representative": {
+    "name": "Musterhandel Austria Vertretung GmbH",
+    "vat_id": "ATU12345678",
+    "address": {
+      "line1": "Vertretungsgasse 1",
+      "city": "Wien",
+      "postcode": "1010",
+      "country_subdivision": "W",
+      "country_code": "AT"
+    }
+  },
+
+  "delivery": {
+    "actual_delivery_date": "2026-09-20",
+    "ship_to": {
+      "name": "Beispiel AG - Warehouse 2",
+      "identifiers": [
+        { "id": "WH-2", "scheme_id": "" }
+      ],
+      "address": {
+        "line1": "Logistikweg 9",
+        "city": "Hamburg",
+        "postcode": "21109",
+        "country_subdivision": "HH",
+        "country_code": "DE"
+      }
+    }
+  },
+
+  "payment": {
+    "payment_terms": "50% paid in advance, remainder due within 14 days net.",
+    "due_date": "2026-10-08",
+    "payment_reference": "REMIT-2026-9999",
+    "creditor_reference_id": "RF18539007547034",
+    "tax_currency_code": "EUR",
+    "direct_debit_mandate_id": "MANDATE-556",
+    "means": {
+      "type_code": "54",
+      "information": "Company credit card",
+      "card": { "id": "1234", "holder_name": "Musterhandel GmbH" },
+      "payer_iban": "DE02120300000000202051",
+      "payee_account": {
+        "iban": "DE89370400440532013000",
+        "account_name": "Musterhandel GmbH",
+        "bic": "COBADEFFXXX"
+      }
+    }
+  },
+
+  "document_allowances": [
+    {
+      "amount": "50.00",
+      "base_amount": "1000.00",
+      "percent": "5",
+      "tax_category": "S",
+      "tax_rate": "19",
+      "reason": "Volume discount",
+      "reason_code": "95"
+    }
+  ],
+  "document_charges": [
+    {
+      "amount": "25.00",
+      "base_amount": "1000.00",
+      "percent": "2.5",
+      "tax_category": "S",
+      "tax_rate": "19",
+      "reason": "Packaging",
+      "reason_code": "PC"
+    }
+  ],
+
+  "lines": [
+    {
+      "line_id": "1",
+      "notes": ["Handle with care"],
+      "product": {
+        "name": "Office chair, ergonomic",
+        "description": "Ergonomic office chair with adjustable lumbar support",
+        "seller_assigned_id": "ART-1001",
+        "buyer_assigned_id": "CUST-ART-1",
+        "global_id": { "id": "4006381333931", "scheme_id": "0160" },
+        "origin_country_code": "DE",
+        "attributes": [
+          { "name": "Color", "value": "Black" },
+          { "name": "Material", "value": "Mesh" }
+        ],
+        "classifications": [
+          { "list_id": "TSC", "list_version_id": "2024", "code": "94013000" }
+        ]
+      },
+      "quantity": { "value": "3", "unit_code": "C62" },
+      "price": {
+        "net_unit_price": "180.00",
+        "gross_unit_price": "200.00",
+        "discount_amount": "20.00",
+        "base_quantity": { "value": "1", "unit_code": "C62" },
+        "net_base_quantity": { "value": "1", "unit_code": "C62" }
+      },
+      "vat": { "category_code": "S", "rate": "19" },
+      "line_total_amount": "540.00",
+      "invoicing_period": { "start": "2026-09-01", "end": "2026-09-30" },
+      "allowances": [
+        {
+          "amount": "10.00",
+          "base_amount": "540.00",
+          "percent": "1.85",
+          "reason": "Loyalty discount",
+          "reason_code": "100"
+        }
+      ],
+      "charges": [
+        {
+          "amount": "5.00",
+          "base_amount": "540.00",
+          "percent": "0.93",
+          "reason": "Express handling",
+          "reason_code": "FC"
+        }
+      ],
+      "object_references": [
+        { "reference_type_code": "ON", "value": "SO-5567-1" }
+      ],
+      "buyer_accounting_reference": "COSTCENTER-77-1"
+    },
+    {
+      "line_id": "2",
+      "product": {
+        "name": "Height-adjustable desk",
+        "seller_assigned_id": "ART-2044",
+        "origin_country_code": "DE",
+        "classifications": [
+          { "list_id": "TSC", "list_version_id": "2024", "code": "94033000" }
+        ]
+      },
+      "quantity": { "value": "1", "unit_code": "C62" },
+      "price": { "net_unit_price": "420.00" },
+      "vat": { "category_code": "S", "rate": "19" },
+      "line_total_amount": "420.00"
+    },
+    {
+      "line_id": "3",
+      "product": {
+        "name": "Export service",
+        "description": "Consulting service, zero-rated intra-community export"
+      },
+      "quantity": { "value": "1", "unit_code": "C62" },
+      "price": { "net_unit_price": "40.00" },
+      "vat": { "category_code": "Z", "rate": "0" },
+      "line_total_amount": "40.00"
+    }
+  ],
+
+  "vat_breakdown": [
+    {
+      "taxable_amount": "960.00",
+      "tax_amount": "182.40",
+      "category_code": "S",
+      "rate": "19",
+      "tax_point_date": "2026-09-20",
+      "due_date_type": "5"
+    },
+    {
+      "taxable_amount": "40.00",
+      "tax_amount": "0.00",
+      "category_code": "Z",
+      "rate": "0",
+      "exemption_reason": "Intra-community supply of services",
+      "exemption_reason_code": "VATEX-EU-IC"
+    }
+  ],
+
+  "totals": {
+    "currency": "EUR",
+    "sum_of_line_amounts": "1000.00",
+    "allowance_total": "50.00",
+    "charge_total": "25.00",
+    "tax_basis_total": "1000.00",
+    "tax_total": "182.40",
+    "tax_total_in_accounting_currency": { "amount": "182.40", "currency": "EUR" },
+    "rounding_amount": "0.00",
+    "grand_total": "1157.40",
+    "prepaid_amount": "500.00",
+    "due_payable_amount": "657.40"
+  }
+}

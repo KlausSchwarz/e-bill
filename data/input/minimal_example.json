@@ -1,0 +1,67 @@
+{
+  "_comment": "Minimal EN 16931 invoice: only the fields required to produce a schema-valid Factur-X/ZUGFeRD invoice. BT-nnn/BG-nnn = EN 16931 business term/group IDs.",
+  "level": "en16931",
+
+  "invoice": {
+    "id": "INV-2026-0001",
+    "issue_date": "2026-09-24",
+    "type_code": "380"
+  },
+
+  "seller": {
+    "name": "Musterhandel GmbH",
+    "address": {
+      "country_code": "DE"
+    }
+  },
+
+  "buyer": {
+    "name": "Beispiel AG",
+    "address": {
+      "country_code": "DE"
+    }
+  },
+
+  "delivery": {
+    "actual_delivery_date": "2026-09-24"
+  },
+
+  "lines": [
+    {
+      "line_id": "1",
+      "product": {
+        "name": "Consulting hours"
+      },
+      "quantity": {
+        "value": "1",
+        "unit_code": "C62"
+      },
+      "price": {
+        "net_unit_price": "100.00"
+      },
+      "vat": {
+        "category_code": "S",
+        "rate": "19"
+      },
+      "line_total_amount": "100.00"
+    }
+  ],
+
+  "vat_breakdown": [
+    {
+      "taxable_amount": "100.00",
+      "tax_amount": "19.00",
+      "category_code": "S",
+      "rate": "19"
+    }
+  ],
+
+  "totals": {
+    "currency": "EUR",
+    "sum_of_line_amounts": "100.00",
+    "tax_basis_total": "100.00",
+    "tax_total": "19.00",
+    "grand_total": "119.00",
+    "due_payable_amount": "119.00"
+  }
+}

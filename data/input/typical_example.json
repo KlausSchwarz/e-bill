@@ -1,0 +1,140 @@
+{
+  "_comment": "A realistic everyday invoice: full addresses, contact details, several line items, payment terms and IBAN, a note. BT-nnn/BG-nnn = EN 16931 business term/group IDs.",
+  "level": "en16931",
+
+  "invoice": {
+    "id": "INV-2026-0142",
+    "issue_date": "2026-09-24",
+    "type_code": "380",
+    "buyer_reference": "PO-4711",
+    "notes": [
+      { "text": "Thank you for your order. Payment within 14 days without deduction." }
+    ]
+  },
+
+  "seller": {
+    "name": "Musterhandel GmbH",
+    "vat_id": "DE123456789",
+    "address": {
+      "line1": "Musterstrasse 12",
+      "city": "Berlin",
+      "postcode": "10115",
+      "country_code": "DE"
+    },
+    "contact": {
+      "name": "Anna Beispiel",
+      "phone": "+49 30 1234567",
+      "email": "buchhaltung@musterhandel.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Beispiel AG",
+    "vat_id": "DE987654321",
+    "address": {
+      "line1": "Kundenweg 5",
+      "city": "Hamburg",
+      "postcode": "20095",
+      "country_code": "DE"
+    },
+    "contact": {
+      "name": "Max Kunde",
+      "email": "einkauf@beispiel-ag.example"
+    }
+  },
+
+  "delivery": {
+    "actual_delivery_date": "2026-09-22"
+  },
+
+  "payment": {
+    "payment_terms": "Payment due within 14 days, net.",
+    "due_date": "2026-10-08",
+    "means": {
+      "type_code": "58",
+      "payee_account": {
+        "iban": "DE89370400440532013000",
+        "account_name": "Musterhandel GmbH",
+        "bic": "COBADEFFXXX"
+      }
+    }
+  },
+
+  "lines": [
+    {
+      "line_id": "1",
+      "product": {
+        "name": "Office chair, ergonomic",
+        "seller_assigned_id": "ART-1001"
+      },
+      "quantity": {
+        "value": "3",
+        "unit_code": "C62"
+      },
+      "price": {
+        "net_unit_price": "180.00"
+      },
+      "vat": {
+        "category_code": "S",
+        "rate": "19"
+      },
+      "line_total_amount": "540.00"
+    },
+    {
+      "line_id": "2",
+      "product": {
+        "name": "Height-adjustable desk",
+        "seller_assigned_id": "ART-2044"
+      },
+      "quantity": {
+        "value": "1",
+        "unit_code": "C62"
+      },
+      "price": {
+        "net_unit_price": "420.00"
+      },
+      "vat": {
+        "category_code": "S",
+        "rate": "19"
+      },
+      "line_total_amount": "420.00"
+    },
+    {
+      "line_id": "3",
+      "product": {
+        "name": "Delivery and assembly",
+        "description": "On-site delivery and assembly service"
+      },
+      "quantity": {
+        "value": "1",
+        "unit_code": "C62"
+      },
+      "price": {
+        "net_unit_price": "60.00"
+      },
+      "vat": {
+        "category_code": "S",
+        "rate": "19"
+      },
+      "line_total_amount": "60.00"
+    }
+  ],
+
+  "vat_breakdown": [
+    {
+      "taxable_amount": "1020.00",
+      "tax_amount": "193.80",
+      "category_code": "S",
+      "rate": "19"
+    }
+  ],
+
+  "totals": {
+    "currency": "EUR",
+    "sum_of_line_amounts": "1020.00",
+    "tax_basis_total": "1020.00",
+    "tax_total": "193.80",
+    "grand_total": "1213.80",
+    "due_payable_amount": "1213.80"
+  }
+}
