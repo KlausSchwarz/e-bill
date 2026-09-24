@@ -29,6 +29,7 @@ from pypdf.generic import (
     TextStringObject,
 )
 from reportlab.lib.units import mm
+from reportlab.lib.utils import simpleSplit
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
@@ -522,6 +523,7 @@ def _render_visual_pdf(params: dict, profile) -> bytes:
     c.setTitle(f"{L['invoice']} {invoice['id']}")
     width, height = profile.page_size
     left = 20 * mm
+    right = width - 20 * mm
     y = height - 20 * mm
 
     c.setFont(FONT_NAME_BOLD, 16)
@@ -548,42 +550,63 @@ def _render_visual_pdf(params: dict, profile) -> bytes:
         y -= 5 * mm
     y = min(y, y_after_seller) - 10 * mm
 
+    # Column x-positions: position/description are left-aligned, the numeric
+    # columns are right-aligned to their own x so amounts of any width line up.
+    # The unit code (e.g. "C62", a UN/CEFACT unit-of-measure code from BT-130)
+    # is deliberately left out here - it belongs in the machine-readable XML,
+    # not the human-readable page. Numeric columns are sized (right to left)
+    # to fit realistic amounts, and the description column takes whatever
+    # width remains, wrapping onto multiple lines instead of overflowing.
+    pos_x = left
+    desc_x = left + 12 * mm
+    gap = 4 * mm
+    total_width, vat_width, price_width, qty_width = 28 * mm, 12 * mm, 26 * mm, 16 * mm
+
+    total_right_x = right
+    vat_right_x = total_right_x - total_width - gap
+    price_right_x = vat_right_x - vat_width - gap
+    qty_right_x = price_right_x - price_width - gap
+    desc_width = (qty_right_x - qty_width) - gap - desc_x
+
     c.setFont(FONT_NAME_BOLD, 10)
-    headers = [
-        L["col_pos"], L["col_description"], L["col_qty"],
-        L["col_unit_price"], L["col_vat_percent"], L["col_line_total"],
-    ]
-    col_x = [left, left + 12 * mm, left + 95 * mm, left + 115 * mm, left + 145 * mm, left + 165 * mm]
-    for header, x in zip(headers, col_x):
-        c.drawString(x, y, header)
+    c.drawString(pos_x, y, L["col_pos"])
+    c.drawString(desc_x, y, L["col_description"])
+    c.drawRightString(qty_right_x, y, L["col_qty"])
+    c.drawRightString(price_right_x, y, L["col_unit_price"])
+    c.drawRightString(vat_right_x, y, L["col_vat_percent"])
+    c.drawRightString(total_right_x, y, L["col_line_total"])
     y -= 5 * mm
-    c.line(left, y, width - 20 * mm, y)
+    c.line(left, y, right, y)
     y -= 5 * mm
 
     c.setFont(FONT_NAME, 9)
+    line_height = 4 * mm
     for line in params["lines"]:
         product = line["product"]
         quantity = line["quantity"]
         price = line["price"]
         vat = line["vat"]
-        row = [
-            line["line_id"],
-            product["name"],
-            f"{format_amount(quantity['value'], profile)} {quantity['unit_code']}",
-            money(price["net_unit_price"]),
-            f"{vat.get('rate', '-')}",
-            money(line["line_total_amount"]),
-        ]
-        for value, x in zip(row, col_x):
-            c.drawString(x, y, str(value))
-        y -= 5 * mm
-        if y < 40 * mm:
+
+        desc_lines = simpleSplit(product["name"], FONT_NAME, 9, desc_width)
+        row_height = max(len(desc_lines), 1) * line_height
+
+        if y - row_height < 40 * mm:
             c.showPage()
             c.setFont(FONT_NAME, 9)
             y = height - 20 * mm
 
+        row_top_y = y
+        c.drawString(pos_x, row_top_y, str(line["line_id"]))
+        for i, desc_line in enumerate(desc_lines):
+            c.drawString(desc_x, row_top_y - i * line_height, desc_line)
+        c.drawRightString(qty_right_x, row_top_y, format_amount(quantity["value"], profile))
+        c.drawRightString(price_right_x, row_top_y, money(price["net_unit_price"]))
+        c.drawRightString(vat_right_x, row_top_y, f"{vat.get('rate', '-')}")
+        c.drawRightString(total_right_x, row_top_y, money(line["line_total_amount"]))
+        y -= row_height
+
     y -= 5 * mm
-    c.line(left, y, width - 20 * mm, y)
+    c.line(left, y, right, y)
     y -= 8 * mm
 
     c.setFont(FONT_NAME, 10)
@@ -603,7 +626,7 @@ def _render_visual_pdf(params: dict, profile) -> bytes:
 
     for label, value in totals_rows:
         c.drawString(left + 70 * mm, y, label)
-        c.drawRightString(width - 20 * mm, y, money(value))
+        c.drawRightString(right, y, money(value))
         y -= 5 * mm
 
     payment = params.get("payment") or {}
