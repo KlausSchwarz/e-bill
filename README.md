@@ -34,14 +34,23 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python main.py data/input/typical_example.json
-python main.py data/input/typical_example.json --output out.pdf
-python main.py data/input/typical_example.json --language en
+python main.py
 ```
 
-Writes the generated PDF to `data/output/typical_example.pdf` by default (created on
-first run, git-ignored). Use `--output`/`-o` to override the destination, and
-`--language`/`-l` to override the `language` field from the input JSON.
+Runs every example function defined in `main.py`. Each function takes no arguments:
+it reads its own input JSON from `data/input/` and writes the resulting PDF to
+`data/output/` (created on first run, git-ignored).
+
+- `minimal_example()` → `data/input/minimal_example.json`
+- `typical_example()` → `data/input/typical_example.json`
+- `full_en16931_example()` → `data/input/full_en16931_example.json`
+- `pfs()` → `data/input/pfs_example.json`
+
+Call a single example instead of all of them, e.g.:
+
+```bash
+python -c "from main import pfs; pfs()"
+```
 
 ## `create_bill(params)`
 
@@ -91,18 +100,21 @@ rendered in. Add a profile for another language by extending `LOCALE_PROFILES` i
   buyer, payee, tax representative, ship-to), payment means, document- and
   line-level allowances/charges, multiple VAT rates, product classification and
   attributes, rounding and prepaid amounts. Uses `"language": "en"` to demonstrate
-  the English locale profile; the other two examples use the German default.
+  the English locale profile; the other examples use the German default.
+- **`pfs_example.json`** — a small real-world-style invoice: Partner für Spandau
+  billing Maxes Würstchenbude for a rental hut, power and decoration.
 
 ## Project layout
 
 ```
 create_bill.py             # def create_bill(params: dict) -> bytes
 i18n.py                      # language/locale profiles (labels, formats, paper size)
-main.py                     # CLI: load JSON from data/input, write PDF to data/output
+main.py                     # example functions: load JSON from data/input, write PDF to data/output
 data/
 ├── input/
 │   ├── minimal_example.json
 │   ├── typical_example.json
-│   └── full_en16931_example.json
+│   ├── full_en16931_example.json
+│   └── pfs_example.json
 └── output/                 # created on first run (git-ignored)
 ```

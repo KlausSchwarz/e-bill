@@ -1,45 +1,61 @@
-"""CLI entry point to create a hybrid ZUGFeRD/Factur-X PDF invoice from a JSON file.
+"""Entry point to create hybrid ZUGFeRD/Factur-X PDF invoices from the example JSON
+files under data/input/.
 
 Usage:
-    python main.py data/input/typical_example.json
-    python main.py data/input/typical_example.json --output out.pdf
-    python main.py data/input/typical_example.json --language en
+    python main.py
+
+Each example function below takes no arguments: it reads its input JSON from
+data/input/, builds the PDF via create_bill(), and writes it to data/output/.
 """
 
-import argparse
 import json
 from pathlib import Path
 
 from create_bill import create_bill
-from i18n import LOCALE_PROFILES
 
-DEFAULT_OUTPUT_DIR = Path(__file__).parent / "data" / "output"
+INPUT_DIR = Path(__file__).parent / "data" / "input"
+OUTPUT_DIR = Path(__file__).parent / "data" / "output"
+
+
+def _build(name: str) -> Path:
+    params = json.loads((INPUT_DIR / f"{name}.json").read_text(encoding="utf-8"))
+    pdf_bytes = create_bill(params)
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = OUTPUT_DIR / f"{name}.pdf"
+    output_path.write_bytes(pdf_bytes)
+    print(f"Wrote {output_path} ({len(pdf_bytes)} bytes)")
+    return output_path
+
+
+def minimal_example():
+    """Smallest invoice that still validates against the EN 16931 XSD."""
+    return _build("minimal_example")
+
+
+def typical_example():
+    """A realistic everyday invoice: addresses, contact details, several line
+    items, payment terms and IBAN, a note."""
+    return _build("typical_example")
+
+
+def full_en16931_example():
+    """Exercises every EN 16931 business term/group the factur-x library
+    supports."""
+    return _build("full_en16931_example")
+
+
+def pfs():
+    """Party rental invoice: Partner für Spandau billing Maxes Würstchenbude for
+    a rental hut, power and decoration."""
+    return _build("pfs_example")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create a hybrid ZUGFeRD/Factur-X PDF invoice.")
-    parser.add_argument("input_json", type=Path, help="Path to a JSON file with invoice params")
-    parser.add_argument("-o", "--output", type=Path, help="Output PDF path (default: data/output/<input>.pdf)")
-    parser.add_argument(
-        "-l", "--language",
-        choices=sorted(LOCALE_PROFILES),
-        help="Override the 'language' field from the input JSON (de or en)",
-    )
-    args = parser.parse_args()
-
-    params = json.loads(args.input_json.read_text(encoding="utf-8"))
-    if args.language:
-        params["language"] = args.language
-
-    if args.output:
-        output_path = args.output
-    else:
-        DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = DEFAULT_OUTPUT_DIR / f"{args.input_json.stem}.pdf"
-
-    pdf_bytes = create_bill(params)
-    output_path.write_bytes(pdf_bytes)
-    print(f"Wrote {output_path} ({len(pdf_bytes)} bytes)")
+    minimal_example()
+    typical_example()
+    full_en16931_example()
+    pfs()
 
 
 if __name__ == "__main__":

@@ -526,6 +526,13 @@ def _render_visual_pdf(params: dict, profile) -> bytes:
     right = width - 20 * mm
     y = height - 20 * mm
 
+    footer_text = _payee_account_footer_text(params.get("payment"), profile)
+
+    def draw_footer():
+        if footer_text:
+            c.setFont(FONT_NAME, 8)
+            c.drawCentredString(width / 2, 12 * mm, footer_text)
+
     c.setFont(FONT_NAME_BOLD, 16)
     c.drawString(left, y, f"{L['invoice']} {invoice['id']}")
     y -= 8 * mm
@@ -591,6 +598,7 @@ def _render_visual_pdf(params: dict, profile) -> bytes:
         row_height = max(len(desc_lines), 1) * line_height
 
         if y - row_height < 40 * mm:
+            draw_footer()
             c.showPage()
             c.setFont(FONT_NAME, 9)
             y = height - 20 * mm
@@ -653,9 +661,30 @@ def _render_visual_pdf(params: dict, profile) -> bytes:
             c.drawString(left, y, note["text"])
             y -= 5 * mm
 
+    draw_footer()
     c.showPage()
     c.save()
     return buf.getvalue()
+
+
+def _payee_account_footer_text(payment: dict | None, profile) -> str | None:
+    """Build the "IBAN ... / BIC ... / Account holder ..." footer line shown on
+    every page, from the payment.means.payee_account block."""
+    if not payment:
+        return None
+    payee_account = (payment.get("means") or {}).get("payee_account")
+    if not payee_account:
+        return None
+
+    L = profile.labels
+    parts = []
+    if payee_account.get("iban"):
+        parts.append(f"{L['iban']}: {payee_account['iban']}")
+    if payee_account.get("bic"):
+        parts.append(f"{L['bic']}: {payee_account['bic']}")
+    if payee_account.get("account_name"):
+        parts.append(f"{L['account_holder']}: {payee_account['account_name']}")
+    return " · ".join(parts) if parts else None
 
 
 def _party_lines(party: dict, profile) -> list:
